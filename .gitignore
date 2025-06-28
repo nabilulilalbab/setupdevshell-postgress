@@ -2,4 +2,4 @@
 .postgres-data/
 .data/
 .direnv/
-
+.direnv
