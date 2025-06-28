@@ -86,9 +86,9 @@ packages = [
   "gopls"
 ]
 # Kostumisasi tampilan prompt shell (opsional).
-prompt = " (proyek-go) λ "
+#prompt = " (proyek-go) λ "
 # Nonaktifkan pesan selamat datang default (opsional).
-motd = ""
+#motd = ""
 
 # Daftar perintah utama yang akan tampil di menu.
 [[commands]]
