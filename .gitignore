@@ -1,3 +1,5 @@
 /.direnv/.postgres-data/
 .postgres-data/
 .data/
+.direnv/
+
