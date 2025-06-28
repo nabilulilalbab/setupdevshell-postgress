@@ -1,0 +1,31 @@
+# Konfigurasi untuk devshell
+
+[devshell]
+packages = [
+  "gopls" # Language Server untuk Go
+]
+
+[[commands]]
+package = "go"
+help = "Go Programming Language"
+
+[[commands]]
+package = "postgresql_16"
+help = "PostgreSQL server & client tools"
+
+# Shortcut untuk koneksi manual ke DB 'korteks'
+[[commands]]
+name = "db"
+help = "Connect to the 'korteks' database"
+command = "psql -h \"$PWD/.postgres-data\" -d korteks"
+
+# INI KUNCINYA: Mengatur DATABASE_URL untuk aplikasi Go
+[[env]]
+name = "DATABASE_URL"
+value = "postgres://korteks@localhost:5432/korteks?sslmode=disable"
+
+# Grup layanan untuk menjalankan postgres di latar belakang
+[serviceGroups.database]
+description = "Menjalankan database PostgreSQL di latar belakang"
+[serviceGroups.database.services.postgres]
+command = "postgres -D $PWD/.postgres-data -k $PWD/.postgres-data"
