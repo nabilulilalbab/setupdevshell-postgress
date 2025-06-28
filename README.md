@@ -222,3 +222,108 @@ Setelah setup awal selesai, Anda bisa bekerja setiap hari dengan alur sebagai be
    ```
 
 Selamat! Anda telah berhasil membangun fondasi proyek yang luar biasa kuat. Konfigurasi ini membagi tanggung jawab dengan jelas: `flake.nix` untuk tools, `devshell.toml` untuk layanan dan konfigurasi, dan `main.go` untuk logika aplikasi.
+
+Ah, ini adalah masalah klasik yang sangat bagus\! Anda telah menemukan interaksi yang menarik antara empat komponen: Shell utama Anda (**Fish**), otomatisasi environment (**`direnv`**), editor teks Anda (**Neovim**), dan konfigurasi editor Anda (**NvChad**).
+
+Penyebabnya hampir pasti adalah **konfigurasi NvChad itu sendiri**, yang secara eksplisit memberitahu terminal internalnya untuk menggunakan `bash` demi stabilitas dan konsistensi, tanpa mempedulikan shell default Anda.
+
+Neovim memiliki pengaturan internal untuk menentukan program shell mana yang akan dijalankan saat Anda membuka terminal. NvChad, sebagai sebuah framework konfigurasi, mengatur default ini ke `bash`. Kabar baiknya, kita bisa dengan mudah mengubahnya.
+
+### Solusi Langsung: Mengubah Pengaturan Shell di NvChad
+
+Kita akan memberitahu NvChad untuk menggunakan `fish` sebagai shell untuk terminal internalnya.
+
+1.  **Buka File Konfigurasi Kustom NvChad:**
+    File utama untuk konfigurasi kustom NvChad biasanya ada di:
+    `~/.config/nvim/lua/custom/chadrc.lua`
+
+2.  **Tambahkan Pengaturan Shell:**
+    Buka file tersebut. Anda akan melihat sebuah tabel Lua yang diawali dengan `local M = {}`. Di dalam tabel ini, tambahkan satu baris untuk mengatur `vim.o.shell`.
+
+    **`~/.config/nvim/lua/custom/chadrc.lua`:**
+
+    ```lua
+    -- chadrc.lua
+
+    ---@type ChadrcConfig
+    local M = {}
+
+    M.ui = {
+      theme = 'onedark',
+      -- contoh pengaturan lain...
+    }
+
+    -- ... pengaturan M lainnya ...
+
+    -- ==========================================================
+    -- TAMBAHKAN BARIS INI
+    -- ==========================================================
+    -- Menetapkan 'fish' sebagai shell untuk terminal internal (:term)
+    vim.o.shell = "fish"
+    -- ==========================================================
+
+    return M
+    ```
+
+3.  **Simpan file dan restart Neovim.**
+
+Sekarang, saat Anda membuka terminal di dalam Neovim (misalnya dengan `:term`), ia akan membuka shell `fish`.
+
+#### **Alur Kerja yang Benar (Sangat Penting\!)**
+
+Agar ini berfungsi dengan benar, Anda harus memastikan Neovim itu sendiri dijalankan dari dalam environment Nix.
+
+1.  Buka terminal Fish normal Anda.
+2.  `cd` ke direktori proyek Anda. `direnv` akan secara otomatis aktif dan memuat semua _tools_ dari `flake.nix` (termasuk `fish` versi Nix).
+3.  Dari terminal yang **sudah diaktifkan oleh `direnv`** ini, jalankan `nvim`.
+4.  Sekarang, di dalam `nvim`, buka terminal. Terminal baru ini akan menjadi `fish` dan juga akan memiliki akses ke semua _tools_ Nix Anda.
+
+---
+
+### Solusi Lanjutan: Integrasi `direnv` Langsung ke Neovim
+
+Untuk pengalaman yang lebih mulus lagi, Anda bisa membuat Neovim "sadar" akan `direnv` secara langsung. Dengan cara ini, bahkan jika Anda membuka `nvim` dari luar direktori proyek, saat Anda membuka file di dalam proyek, environment-nya akan dimuat secara otomatis.
+
+Ini dilakukan dengan menambahkan plugin `direnv` ke konfigurasi NvChad Anda.
+
+1.  **Buka File Konfigurasi Plugin Kustom:**
+    File untuk menambahkan plugin di NvChad adalah:
+    `~/.config/nvim/lua/custom/plugins.lua`
+
+2.  **Tambahkan Plugin `direnv.vim`:**
+    Tambahkan blok kode untuk `direnv/direnv.vim` ke dalam daftar plugin Anda.
+
+    **`~/.config/nvim/lua/custom/plugins.lua`:**
+
+    ```lua
+    local plugins = {
+      -- Contoh plugin yang mungkin sudah ada
+      {
+        "nvim-treesitter/nvim-treesitter",
+        opts = {
+          ensure_installed = { "lua", "vim", "vimdoc" },
+        },
+      },
+
+      -- ==========================================================
+      -- TAMBAHKAN BLOK INI UNTUK INTEGRASI DIRENV
+      -- ==========================================================
+      {
+        "direnv/direnv.vim",
+        -- Tidak perlu event atau config khusus, plugin ini bekerja otomatis
+      },
+      -- ==========================================================
+    }
+
+    return plugins
+    ```
+
+3.  **Simpan file, restart `nvim`, dan jalankan `:Lazy sync`** untuk menginstal plugin baru tersebut.
+
+**Apa Keuntungannya?**
+Dengan plugin ini, Neovim akan secara aktif "berbicara" dengan `direnv`. Setiap kali Anda membuka buffer (file) dari proyek yang memiliki file `.envrc`, plugin ini akan secara otomatis memuat environment yang sesuai, termasuk semua variabel lingkungan dan `PATH` ke _tools_ Nix Anda. Ini membuat integrasi antara editor dan environment development Anda menjadi sempurna.
+
+### Rekomendasi
+
+1.  Lakukan **Solusi Langsung** terlebih dahulu (`vim.o.shell = "fish"`). Ini akan langsung menyelesaikan masalah utama Anda.
+2.  Jika Anda menginginkan pengalaman yang paling mulus, pertimbangkan untuk menambahkan **Solusi Lanjutan** (plugin `direnv`).
